@@ -1,0 +1,97 @@
+# TEST CONFIGURATION - Uses port 8080 to avoid conflicts with production
+# This file is identical to docker-compose.yml but uses port 8080 for testing
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#   Then run e2e tests with BASE_URL=http://localhost:8080
+
+version: '3.8'
+
+services:
+  # ========================================
+  # NGINX - Main web server (port 8080 for testing)
+  # ========================================
+  nginx:
+    image: nginx:alpine
+    container_name: dashboards-nginx-test
+    restart: unless-stopped
+    ports:
+      - "8080:80"  # Use 8080 to avoid conflict with production
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/hub:/usr/share/nginx/html/hub:ro
+      - goose-test-output:/usr/share/nginx/html/goose:ro
+      - reo-test-output:/usr/share/nginx/html/reo:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - dashboards-test-network
+
+  # ========================================
+  # GRUMPY GOOSE (using existing image)
+  # ========================================
+  grumpygoose:
+    container_name: grumpygoose-test
+    image: ghcr.io/graphprotocol/grumpygoose:latest
+    restart: "no"
+    environment:
+      - ENVIRONMENT=production
+      - GOOSE_OUTPUT_DIR=/app/output
+    volumes:
+      - goose-test-output:/app/output
+    command: >
+      sh -c "
+      echo '🪿 Generating initial Grumpy Goose dashboard...' &&
+      python setup.py &&
+      python generate_static.py &&
+      echo '✅ Grumpy Goose dashboard generated!'
+      "
+    networks:
+      - dashboards-test-network
+
+  # Skip scheduler for testing - just generate once
+
+  # ========================================
+  # REWARDS ELIGIBILITY ORACLE (local build for testing)
+  # ========================================
+  reo:
+    container_name: reo-test
+    build:
+      context: ../rewards-eligibility-oracle-dashboard
+      dockerfile: Dockerfile
+    restart: "no"
+    environment:
+      - ENVIRONMENT=production
+    volumes:
+      - reo-test-output:/app/output
+    env_file:
+      - ../rewards-eligibility-oracle-dashboard/.env.example  # Use example for testing
+    command: ["python", "generate_dashboard.py"]
+    networks:
+      - dashboards-test-network
+
+  # Skip scheduler for testing - just generate once
+
+# ========================================
+# Networks
+# ========================================
+networks:
+  dashboards-test-network:
+    driver: bridge
+    name: dashboards-test-network
+
+# ========================================
+# Volumes (separate from production)
+# ========================================
+volumes:
+  goose-test-output:
+    driver: local
+    name: goose-test-output
+
+  reo-test-output:
+    driver: local
+    name: reo-test-output

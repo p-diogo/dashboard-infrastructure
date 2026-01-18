@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Graph Dashboard Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .update-time {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: #10b981;
+            color: white;
+        }
+
+        .view-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .view-button:hover {
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 60px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 The Graph Dashboard Hub</h1>
+        <p class="subtitle">Monitoring and analytics dashboards for The Graph Protocol ecosystem</p>
+
+        <div class="dashboard-grid">
+            <!-- Grumpy Goose Card -->
+            <a href="/goose" class="card">
+                <div class="card-icon">🪿</div>
+                <h2>The Grumpy Goose</h2>
+                <p>Governance oversight and operational monitoring for The Graph Protocol. Tracks Snapshot proposals, Safe multisig transactions, and council governance activities.</p>
+                <div class="card-meta">
+                    <span class="update-time">Updated every 5 minutes</span>
+                    <span class="status-badge">Live</span>
+                </div>
+            </a>
+
+            <!-- Rewards Eligibility Oracle Card -->
+            <a href="/reo" class="card">
+                <div class="card-icon">🍪</div>
+                <h2>Rewards Eligibility Oracle</h2>
+                <p>Real-time monitoring of indexer eligibility for rewards based on GIP-0079 service quality metrics. Tracks eligibility status, grace periods, and indexer performance.</p>
+                <div class="card-meta">
+                    <span class="update-time">Updated every 5 minutes</span>
+                    <span class="status-badge">Live</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Created with ♥ by The Graph community | <a href="https://thegraph.com" style="color: white; text-decoration: underline;">The Graph Protocol</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Add dynamic update times if available
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Smooth navigation
+                    e.preventDefault();
+                    window.location.href = this.getAttribute('href');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
