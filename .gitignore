@@ -14,3 +14,8 @@ playwright/.cache/
 # OS
 .DS_Store
 Thumbs.db
+
+# SSL Certificates (NEVER commit these!)
+cloudflare-origin.crt
+cloudflare-origin.key
+
