@@ -66,6 +66,7 @@ services:
       - GOOSE_OUTPUT_DIR=/app/output
     volumes:
       - goose-output:/app/output
+      - goose-data:/app
     command: >
       sh -c "
       echo '🪿 Generating initial Grumpy Goose dashboard...' &&
@@ -85,6 +86,7 @@ services:
       - GOOSE_OUTPUT_DIR=/app/output
     volumes:
       - goose-output:/app/output
+      - goose-data:/app
     env_file:
       - ../grumpygoose/.env
     command: ["python", "scheduler.py"]
@@ -152,6 +154,10 @@ volumes:
   goose-output:
     driver: local
     name: goose-output
+
+  goose-data:
+    driver: local
+    name: goose-data
 
   reo-output:
     driver: local
