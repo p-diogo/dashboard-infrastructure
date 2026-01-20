@@ -1,0 +1,27 @@
+{
+  "name": "dashboard-infrastructure",
+  "version": "1.0.0",
+  "description": "Unified deployment infrastructure for The Graph Protocol monitoring dashboards.",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:install": "playwright install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/p-diogo/dashboard-infrastructure.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/p-diogo/dashboard-infrastructure/issues"
+  },
+  "homepage": "https://github.com/p-diogo/dashboard-infrastructure#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}
