@@ -13,17 +13,18 @@ This file tracks high-level tasks, improvements, and known issues for the dashbo
     - B) Remove certbot entirely and rely solely on Cloudflare
   - Decision needed: Choose approach A or B
 
-- [ ] **Playwright E2E Test System Dependencies**
-  - Playwright requires system libraries: libnspr4, libnss3, libatk, etc.
-  - Need to either:
-    - Install system dependencies on server
-    - Use Docker-based Playwright testing
-    - Find alternative E2E testing approach
+- [ ] **Install Playwright E2E Test Dependencies** ⚠️ REQUIRES SUDO
+  - Missing libraries: `libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2`
+  - Install command:
+    ```bash
+    sudo apt-get update && sudo apt-get install -y libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
+    ```
+  - After install, run: `npm test` to verify E2E tests work
 
-- [ ] **Production Deploy REO with SQLite**
-  - Database module added, needs testing in production
-  - Verify data persistence across container restarts
-  - Monitor for any performance issues
+- [ ] **Complete REO Styling Updates**
+  - Part 1 complete: gradient background, white container, purple header
+  - Part 2 needed: table styling, footer, badges, cards
+  - Apply remaining The Graph brand colors throughout
 
 ### 🟡 Medium Priority
 
