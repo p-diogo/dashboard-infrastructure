@@ -87,29 +87,27 @@ services:
   # ========================================
   reo:
     container_name: reo-prod
-    image: ghcr.io/graphprotocol/rewards-eligibility-oracle:latest
+    image: ghcr.io/graphprotocol/rewards-eligibility-oracle-dashboard:latest
     restart: "no"  # One-shot: generate and exit
     environment:
       - ENVIRONMENT=production
     volumes:
       - reo-output:/app/output
-    env_file:
-      - ../rewards-eligibility-oracle-dashboard/.env
+      - ../rewards-eligibility-oracle-dashboard/.env:/app/.env:ro
     command: ["python", "generate_dashboard.py"]
     networks:
       - dashboards-network
 
   reo-scheduler:
     container_name: reo-scheduler-prod
-    image: ghcr.io/graphprotocol/rewards-eligibility-oracle:latest
+    image: ghcr.io/graphprotocol/rewards-eligibility-oracle-dashboard:latest
     restart: unless-stopped
     environment:
       - ENVIRONMENT=production
       - REO_SCHEDULER_INTERVAL_MINUTES=5
     volumes:
       - reo-output:/app/output
-    env_file:
-      - ../rewards-eligibility-oracle-dashboard/.env
+      - ../rewards-eligibility-oracle-dashboard/.env:/app/.env:ro
     command: ["python", "scheduler.py"]
     depends_on:
       reo:

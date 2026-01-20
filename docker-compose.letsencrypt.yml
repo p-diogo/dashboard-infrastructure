@@ -30,7 +30,7 @@ services:
       - goose-output:/usr/share/nginx/html/goose:ro
       - reo-output:/usr/share/nginx/html/reo:ro
       - certbot-etc:/etc/letsencrypt:ro
-      - certbot-var:/var/www/certbot:ro
+      - certbot-var:/var/www/certbot:rw
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -110,8 +110,7 @@ services:
       - ENVIRONMENT=production
     volumes:
       - reo-output:/app/output
-    env_file:
-      - ../rewards-eligibility-oracle-dashboard/.env
+      - ../rewards-eligibility-oracle-dashboard/.env:/app/.env:ro
     command: ["python", "generate_dashboard.py"]
     networks:
       - dashboards-network
@@ -125,8 +124,7 @@ services:
       - REO_SCHEDULER_INTERVAL_MINUTES=5
     volumes:
       - reo-output:/app/output
-    env_file:
-      - ../rewards-eligibility-oracle-dashboard/.env
+      - ../rewards-eligibility-oracle-dashboard/.env:/app/.env:ro
     command: ["python", "scheduler.py"]
     depends_on:
       reo:
