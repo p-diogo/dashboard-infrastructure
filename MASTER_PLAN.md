@@ -238,9 +238,46 @@ ghcr.io/graphprotocol/rewards-eligibility-oracle-dashboard:latest ✅
 
 ### **Phase 2: DNS Setup (TODO)**
 
-1. Create DNS record for `hub.thegraph.foundation` → your server IP
-2. In Cloudflare, set to **DNS-only** (grey cloud icon)
-3. Keep `dashboards.thegraph.foundation` pointing to old infrastructure (for now)
+#### **Step-by-Step Cloudflare DNS Configuration**
+
+1. **Log in to Cloudflare Dashboard**
+   - Go to https://dash.cloudflare.com/sign-in
+   - Enter your credentials and sign in
+
+2. **Select Your Domain**
+   - In the top search bar, type: `thegraph.foundation`
+   - Click on the domain in the results
+
+3. **Add DNS Record for hub.thegraph.foundation**
+   - In the left sidebar, click **DNS** → **Records**
+   - Click the blue **Add record** button
+   - Configure as follows:
+     - **Type**: `A`
+     - **Name**: `hub`
+     - **IPv4 address**: `<your-server-IP>` (e.g., 164.90.123.45)
+     - **Proxy status**: Click the cloud icon until it's **GREY** (DNS only)
+     - **TTL**: Auto
+     - **Comments**: `Dashboard hub infrastructure`
+   - Click **Save**
+
+4. **Verify the DNS Record**
+   - You should see: `hub.thegraph.foundation` → A → `<your-IP>` with a GREY cloud
+   - The grey cloud means "DNS only" (not proxying)
+
+5. **Keep dashboards.thegraph.foundation Unchanged**
+   - Find existing `dashboards` record
+   - Do NOT modify it (it points to old infrastructure)
+   - Leave it as-is until you're ready to cutover
+
+6. **Wait for DNS Propagation**
+   - DNS changes typically take 5-30 minutes to propagate
+   - You can verify with: `nslookup hub.thegraph.foundation`
+   - Should return your server IP
+
+**Important Notes:**
+- ⚠️ **GREY cloud** = DNS only (what we want for hub)
+- ⚠️ **ORANGE cloud** = Proxied (what dashboards currently uses)
+- The grey/orange cloud icons are in the "Proxy status" column
 
 ### **Phase 3: Deploy to hub.thegraph.foundation (TODO)**
 
@@ -264,35 +301,192 @@ cp env.example .env
 # Edit .env with your API keys and configuration
 ```
 
-#### **3c. Deploy**
+#### **3c. Deploy the Hub Infrastructure**
 
-**If using Let's Encrypt:**
+**PREREQUISITES:**
+- ✅ DNS record created for `hub.thegraph.foundation`
+- ✅ Cloudflare set to DNS-only (grey cloud)
+- ✅ DNS propagated (verify with `nslookup hub.thegraph.foundation`)
+- ✅ REO `.env` file created from `env.example`
+
+---
+
+**DEPLOYMENT OPTION A: HTTP Only (For Initial Testing)**
+
+Use this to test everything works before setting up SSL:
+
 ```bash
+# 1. Navigate to infrastructure directory
 cd /home/pdiogo/hosted-apps/repos/dashboard-infrastructure
 
-# 1. Deploy with HTTP first
+# 2. Deploy with HTTP only
+docker compose up -d
+
+# 3. Wait for containers to start (30-60 seconds)
+# You should see:
+# - Creating network "dashboards-network"
+# - Creating volume "goose-output"
+# - Creating volume "reo-output"
+# - Creating container dashboards-nginx
+# - Creating container grumpygoose-prod
+# - Creating container reo-prod
+
+# 4. Check container status
+docker compose ps
+# All containers should show "Up" status
+
+# 5. Check initial logs
+docker compose logs --tail=50
+
+# 6. Verify the hub is accessible
+curl http://localhost/
+# Should return HTML with "The Graph Dashboard Hub" in title
+
+# 7. Access via your domain
+curl http://hub.thegraph.foundation
+# Should work if DNS has propagated
+
+# 8. Test in browser
+open http://hub.thegraph.foundation
+# Should see the dashboard hub with two cards (Grumpy Goose + REO)
+```
+
+---
+
+**DEPLOYMENT OPTION B: Let's Encrypt SSL (Recommended for Production)**
+
+Use this for secure HTTPS with automatic certificate renewals:
+
+```bash
+# ============================================
+# STEP 1: Create REO Environment File
+# ============================================
+cd /home/pdiogo/hosted-apps/repos/rewards-eligibility-oracle-dashboard
+cp env.example .env
+nano .env  # Or use your preferred editor
+# Add your actual API keys and configuration values
+# Required: GRAPH_API_KEY, ARBISCAN_API_KEY, RPC_ENDPOINT
+
+# ============================================
+# STEP 2: Deploy with HTTP First
+# ============================================
+cd /home/pdiogo/hosted-apps/repos/dashboard-infrastructure
+
+# Deploy containers (HTTP only initially)
 docker compose -f docker-compose.letsencrypt.yml up -d
 
-# 2. Generate SSL certificate
+# Wait for everything to start
+sleep 30
+
+# Verify HTTP works
+curl http://hub.thegraph.foundation
+# Should return the hub page HTML
+
+# ============================================
+# STEP 3: Generate Let's Encrypt Certificate
+# ============================================
+# IMPORTANT: Replace your-email@example.com with your actual email!
+
 docker compose -f docker-compose.letsencrypt.yml run --rm certbot \
   certonly --webroot \
   -w /var/www/certbot \
   -d hub.thegraph.foundation \
   --email your-email@example.com \
-  --agree-tos
+  --agree-tos \
+  --no-eff-email
 
-# 3. Restart nginx to enable HTTPS
+# You should see output like:
+# - Successfully received certificate
+# - Certificate is saved at: /etc/letsencrypt/live/hub.thegraph.foundation/fullchain.pem
+# - Key is saved at: /etc/letsencrypt/live/hub.thegraph.foundation/privkey.pem
+
+# ============================================
+# STEP 4: Restart Nginx to Enable HTTPS
+# ============================================
 docker compose -f docker-compose.letsencrypt.yml restart nginx
 
-# 4. Set up auto-renewal cron
+# Wait a few seconds for nginx to restart
+sleep 5
+
+# ============================================
+# STEP 5: Verify HTTPS Works
+# ============================================
+# Test HTTP redirects to HTTPS
+curl -I http://hub.thegraph.foundation
+# Should return: HTTP/1.1 301 Moved Permanently
+# Location: https://hub.thegraph.foundation/
+
+# Test HTTPS works
+curl -I https://hub.thegraph.foundation
+# Should return: HTTP/2 200
+
+# Open in browser
+open https://hub.thegraph.foundation
+# Should see the hub page with no certificate warnings
+
+# ============================================
+# STEP 6: Set Up Automatic Certificate Renewal
+# ============================================
+# Edit crontab
 crontab -e
-# Add: 0 3 * * * cd /home/pdiogo/hosted-apps/repos/dashboard-infrastructure && docker compose -f docker-compose.letsencrypt.yml run --rm certbot renew --quiet && docker compose -f docker-compose.letsencrypt.yml restart nginx > /var/log/certbot-renew.log 2>&1
+
+# Add this line (runs daily at 3am):
+0 3 * * * cd /home/pdiogo/hosted-apps/repos/dashboard-infrastructure && docker compose -f docker-compose.letsencrypt.yml run --rm certbot renew --quiet && docker compose -f docker-compose.letsencrypt.yml restart nginx > /var/log/certbot-renew.log 2>&1
+
+# Save and exit (in nano: Ctrl+X, then Y, then Enter)
+
+# Verify cron job was added
+crontab -l
+
+# Test renewal (dry run)
+docker compose -f docker-compose.letsencrypt.yml run --rm certbot renew --dry-run
 ```
 
-**If using HTTP only (testing):**
+---
+
+**WHAT HAPPENS DURING DEPLOYMENT:**
+
+1. **Docker pulls images** from GitHub Container Registry:
+   - `ghcr.io/graphprotocol/grumpygoose:latest`
+   - `ghcr.io/graphprotocol/rewards-eligibility-oracle-dashboard:latest`
+
+2. **Generators run once** and create static HTML:
+   - `grumpygoose` container runs `setup.py` and `generate_static.py`
+   - `reo` container runs `generate_dashboard.py`
+   - HTML is written to Docker volumes
+
+3. **Nginx starts** and serves the static HTML from volumes
+
+4. **Schedulers start** and run continuously:
+   - `grumpygoose-scheduler` regenerates HTML every 5 minutes
+   - `reo-scheduler` regenerates HTML every 5 minutes
+
+5. **Hub is accessible** at `http://hub.thegraph.foundation` (or HTTPS with SSL)
+
+---
+
+**QUICK VERIFICATION COMMANDS:**
+
 ```bash
-cd /home/pdiogo/hosted-apps/repos/dashboard-infrastructure
-docker compose up -d
+# Check all containers are running
+docker compose ps
+
+# Check hub page is accessible
+curl http://hub.thegraph.foundation | grep -o "<title>.*</title>"
+
+# Check Grumpy Goose is accessible
+curl http://hub.thegraph.foundation/goose | grep -o "<title>.*</title>"
+
+# Check REO is accessible
+curl http://hub.thegraph.foundation/reo | grep -o "<title>.*</title>"
+
+# View scheduler logs
+docker compose logs grumpygoose-scheduler --tail=20
+docker compose logs reo-scheduler --tail=20
+
+# Check health endpoint
+curl http://hub.thegraph.foundation/health
+# Should return: healthy
 ```
 
 ### **Phase 4: Verification (TODO)**
