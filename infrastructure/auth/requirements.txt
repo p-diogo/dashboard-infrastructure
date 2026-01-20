@@ -1,0 +1,15 @@
+# FastAPI Authentication Service Requirements
+# Python 3.11+
+
+# Web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Data validation (email validation built-in to Pydantic v2)
+pydantic==2.5.0
+
+# Email (via standard library, no extra packages needed)
+# smtplib, email.mime are built-in
+
+# Health check: curl is available in Alpine base image
+

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REO Dashboard - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo img {
+      height: 50px;
+    }
+
+    h1 {
+      font-weight: 600;
+      color: #6B46C1;
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #718096;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: #4A5568;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #E2E8F0;
+      border-radius: 8px;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #9F7AEA;
+    }
+
+    input:disabled {
+      background-color: #F7FAFC;
+      cursor: not-allowed;
+    }
+
+    .button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6B46C1 0%, #9F7AEA 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .button:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .message.success {
+      background-color: #C6F6D5;
+      color: #22543D;
+      border: 1px solid #9AE6B4;
+    }
+
+    .message.error {
+      background-color: #FED7D7;
+      color: #742A2A;
+      border: 1px solid #FC8181;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .otp-section {
+      display: none;
+    }
+
+    .otp-section.active {
+      display: block;
+    }
+
+    .otp-input {
+      letter-spacing: 10px;
+      font-size: 24px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .resend-link {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #6B46C1;
+    }
+
+    .resend-link a {
+      color: #6B46C1;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .resend-link a:hover {
+      text-decoration: underline;
+    }
+
+    .resend-link.disabled {
+      color: #A0AEC0;
+      cursor: not-allowed;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 12px;
+      color: #A0AEC0;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="25" r="25" fill="#6B46C1"/>
+        <path d="M25 15L35 25L25 35L15 25L25 15Z" fill="white"/>
+      </svg>
+    </div>
+
+    <h1>REO Dashboard</h1>
+    <p class="subtitle">Rewards Eligibility Oracle</p>
+
+    <div id="message" class="message"></div>
+
+    <!-- Email Form -->
+    <div id="emailSection">
+      <form id="emailForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="your@email.com"
+            required
+            autofocus
+          >
+        </div>
+        <button type="submit" class="button" id="requestButton">Request Access Code</button>
+      </form>
+    </div>
+
+    <!-- OTP Form -->
+    <div id="otpSection" class="otp-section">
+      <form id="otpForm">
+        <div class="form-group">
+          <label for="otp">Enter 6-Digit Code</label>
+          <input
+            type="text"
+            id="otp"
+            name="otp"
+            class="otp-input"
+            placeholder="000000"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            required
+            autofocus
+          >
+        </div>
+        <button type="submit" class="button" id="verifyButton">Verify & Sign In</button>
+        <div class="resend-link">
+          <span id="resendTimer"></span>
+          <a href="#" id="resendLink">Resend Code</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="footer">
+      Authorized access only • Protected by OTP
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/reo/api';
+    let storedEmail = '';
+    let resendTimeout = null;
+
+    const elements = {
+      emailSection: document.getElementById('emailSection'),
+      otpSection: document.getElementById('otpSection'),
+      emailForm: document.getElementById('emailForm'),
+      otpForm: document.getElementById('otpForm'),
+      emailInput: document.getElementById('email'),
+      otpInput: document.getElementById('otp'),
+      requestButton: document.getElementById('requestButton'),
+      verifyButton: document.getElementById('verifyButton'),
+      message: document.getElementById('message'),
+      resendLink: document.getElementById('resendLink'),
+      resendTimer: document.getElementById('resendTimer')
+    };
+
+    function showMessage(text, type) {
+      elements.message.textContent = text;
+      elements.message.className = `message ${type}`;
+      elements.message.style.display = 'block';
+    }
+
+    function hideMessage() {
+      elements.message.style.display = 'none';
+    }
+
+    function setLoading(button, loading) {
+      button.disabled = loading;
+      button.textContent = loading ? 'Loading...' : button.dataset.original || button.textContent;
+      if (!loading && button.dataset.original) {
+        button.textContent = button.dataset.original;
+      }
+    }
+
+    async function requestOtp(email) {
+      setLoading(elements.requestButton, true);
+      hideMessage();
+
+      try {
+        const response = await fetch(`${API_BASE}/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          storedEmail = email;
+          elements.emailSection.classList.add('hidden');
+          elements.otpSection.classList.add('active');
+          elements.otpInput.focus();
+          startResendTimer();
+          showMessage(data.message || 'Check your email for the verification code', 'success');
+        } else if (response.status === 429) {
+          showMessage(data.detail || 'Too many requests. Please try again later.', 'error');
+        } else if (response.status === 403) {
+          showMessage(data.detail || 'Email not authorized for access', 'error');
+        } else {
+          showMessage(data.detail || 'Failed to send code', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('Network error. Please try again.', 'error');
+      } finally {
+        setLoading(elements.requestButton, false);
+      }
+    }
+
+    async function verifyOtp(code) {
+      setLoading(elements.verifyButton, true);
+      hideMessage();
+
+      try {
+        const response = await fetch(`${API_BASE}/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: storedEmail, code })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage('Authentication successful! Redirecting...', 'success');
+          setTimeout(() => {
+            window.location.href = '/reo/';
+          }, 1000);
+        } else {
+          showMessage(data.detail || 'Invalid or expired code', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('Network error. Please try again.', 'error');
+      } finally {
+        setLoading(elements.verifyButton, false);
+      }
+    }
+
+    function startResendTimer() {
+      let countdown = 60;
+      elements.resendLink.style.display = 'none';
+      elements.resendTimer.style.display = 'inline';
+
+      resendTimeout = setInterval(() => {
+        countdown--;
+        elements.resendTimer.textContent = `Resend available in ${countdown}s `;
+
+        if (countdown <= 0) {
+          clearInterval(resendTimeout);
+          elements.resendTimer.style.display = 'none';
+          elements.resendLink.style.display = 'inline';
+        }
+      }, 1000);
+    }
+
+    elements.emailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = elements.emailInput.value.trim();
+      if (email) {
+        elements.requestButton.dataset.original = elements.requestButton.textContent;
+        requestOtp(email);
+      }
+    });
+
+    elements.otpForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const code = elements.otpInput.value.trim();
+      if (code && code.length === 6) {
+        elements.verifyButton.dataset.original = elements.verifyButton.textContent;
+        verifyOtp(code);
+      }
+    });
+
+    elements.resendLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (storedEmail) {
+        clearInterval(resendTimeout);
+        elements.otpSection.classList.remove('active');
+        elements.emailSection.classList.remove('hidden');
+        elements.emailInput.value = storedEmail;
+        elements.otpInput.value = '';
+        requestOtp(storedEmail);
+      }
+    });
+
+    // Auto-format OTP input (numbers only)
+    elements.otpInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    });
+  </script>
+</body>
+</html>

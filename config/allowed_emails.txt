@@ -1,0 +1,13 @@
+# Whitelisted emails for REO dashboard access
+#
+# Format:
+#   - Lines starting with # are comments
+#   - Use wildcards for entire domains: *@domain.com
+#   - One entry per line
+#
+# Examples:
+#   user@thegraph.foundation
+#   *@thegraph.foundation
+#   *@partner-domain.com
+
+# Add authorized emails below

@@ -1,0 +1,6 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#6B46C1"/>
+  <!-- Diamond shape -->
+  <path d="M100 60L140 100L100 140L60 100L100 60Z" fill="white"/>
+</svg>
