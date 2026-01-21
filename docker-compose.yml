@@ -141,11 +141,14 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM=${SMTP_FROM}
       - SESSION_SECRET=${SESSION_SECRET}
+      - ALLOWED_EMAILS=${ALLOWED_EMAILS}
       - OTP_EXPIRY_MINUTES=${OTP_EXPIRY_MINUTES:-10}
       - SESSION_EXPIRY_DAYS=${SESSION_EXPIRY_DAYS:-7}
       - RATE_LIMIT_PER_HOUR=${RATE_LIMIT_PER_HOUR:-5}
     volumes:
+      # Whitelist file (optional - can use ALLOWED_EMAILS env var instead)
       - ./config/allowed_emails.txt:/app/config/allowed_emails.txt:ro
+      # Email templates
       - ./infrastructure/auth/templates:/app/templates:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

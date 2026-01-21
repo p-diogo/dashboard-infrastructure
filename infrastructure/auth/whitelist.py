@@ -7,29 +7,38 @@ from typing import List
 
 
 class WhitelistValidator:
-    """Validates email addresses against a whitelist file"""
+    """Validates email addresses against a whitelist"""
 
-    def __init__(self, whitelist_path: str = "/app/config/allowed_emails.txt"):
-        self.whitelist_path = Path(whitelist_path)
+    def __init__(self):
         self._entries: List[str] = []
         self._load_whitelist()
 
     def _load_whitelist(self) -> None:
-        """Load and parse whitelist file"""
-        if not self.whitelist_path.exists():
-            raise FileNotFoundError(
-                f"Whitelist file not found at {self.whitelist_path}. "
-                "Please mount the allowed_emails.txt file."
+        """Load whitelist from environment variable or file"""
+        # Try environment variable first (Docker-friendly)
+        env_whitelist = os.getenv('ALLOWED_EMAILS')
+        if env_whitelist:
+            # Support both newline and semicolon separators
+            entries = env_whitelist.replace(';', '\n').split('\n')
+            for line in entries:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    self._entries.append(line.lower())
+            return
+
+        # Fallback to file
+        whitelist_path = os.getenv('WHITELIST_PATH', '/app/config/allowed_emails.txt')
+        if not Path(whitelist_path).exists():
+            raise ValueError(
+                f"No whitelist configured. Set ALLOWED_EMAILS environment variable "
+                f"or provide whitelist file at {whitelist_path}"
             )
 
-        with open(self.whitelist_path, 'r') as f:
+        with open(whitelist_path, 'r') as f:
             for line in f:
                 line = line.strip()
-
-                # Skip empty lines and comments
                 if not line or line.startswith('#'):
                     continue
-
                 self._entries.append(line.lower())
 
     def is_allowed(self, email: str) -> bool:

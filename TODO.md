@@ -21,11 +21,6 @@ This file tracks high-level tasks, improvements, and known issues for the dashbo
     ```
   - After install, run: `npm test` to verify E2E tests work
 
-- [ ] **Complete REO Styling Updates**
-  - Part 1 complete: gradient background, white container, purple header
-  - Part 2 needed: table styling, footer, badges, cards
-  - Apply remaining The Graph brand colors throughout
-
 ### 🟡 Medium Priority
 
 - [ ] **Grumpy Goose Notion Votes**
@@ -63,6 +58,12 @@ This file tracks high-level tasks, improvements, and known issues for the dashbo
 
 ## Recently Completed (2025-01-20)
 
+- ✅ Complete REO styling overhaul to match The Graph brand guidelines
+  - Part 1: Gradient background, white container, purple header, updated badges
+  - Part 2: Removed breadcrumb, added "Back to Hub" link
+  - Part 3: Fixed broken GRT logo (replaced with 🏆 emoji)
+  - Part 4: Light theme for tables and footer (purple gradient headers, purple accents throughout)
+- ✅ Restarted REO with updated env var
 - ✅ Fixed routing - Goose served at `/goose` instead of root
 - ✅ Created E2E testing policy in TESTING.md
 - ✅ Fixed hub footer text: "community" → "Foundation"
@@ -73,9 +74,8 @@ This file tracks high-level tasks, improvements, and known issues for the dashbo
 ## Known Issues
 
 ### REO Dashboard
-- Database module created but not yet tested in production
+- Database module created and working in production
 - Scheduler restarting frequently (needs investigation)
-- 403 error when accessing /reo/ (should be fixed after database refactor)
 
 ### Grumpy Goose
 - Notion vote matching incomplete (Adam Fuller not matched)
@@ -122,5 +122,5 @@ This file tracks high-level tasks, improvements, and known issues for the dashbo
 
 ---
 
-**Last Updated:** 2025-01-20
+**Last Updated:** 2026-01-20
 **Maintained By:** Claude Code agents (see CLAUDE.md)
