@@ -1,0 +1,88 @@
+# Caddy configuration for The Graph Dashboards
+# Automatically obtains and renews Let's Encrypt certificates
+
+# Production: hub.thegraph.foundation (Grumpy Goose)
+hub.thegraph.foundation {
+    # Grumpy Goose at root
+    root * /usr/share/nginx/html/goose
+    file_server browse
+
+    # Health check
+    handle /health {
+        respond "healthy\n" 200
+    }
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    header @static Cache-Control "public, max-age=604800, immutable"
+
+    # HTML cache for 1 minute
+    @html {
+        path *.html
+    }
+    header @html Cache-Control "public, max-age=60"
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Encode
+    encode gzip
+}
+
+# Staging: staging.hub.thegraph.foundation (Active Items UI comparison)
+staging.hub.thegraph.foundation {
+    # Reverse proxy to staging container
+    reverse_proxy grumpygoose-staging:8080
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+
+    # Encode
+    encode gzip
+}
+
+# Legacy: dashboards.thegraph.foundation (Dashboard Hub + Goose + REO)
+dashboards.thegraph.foundation {
+    # Dashboard Hub at root
+    root * /usr/share/nginx/html/hub
+    file_server browse
+
+    # Grumpy Goose
+    handle /goose* {
+        root * /usr/share/nginx/html/goose
+        file_server browse
+    }
+
+    # REO (not protected - auth handled separately)
+    handle /reo* {
+        root * /usr/share/nginx/html/reo
+        file_server browse
+    }
+
+    # Health check
+    handle /health {
+        respond "healthy\n" 200
+    }
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    header @static Cache-Control "public, max-age=604800, immutable"
+
+    # Encode
+    encode gzip
+}

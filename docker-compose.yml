@@ -16,26 +16,25 @@ version: '3.8'
 
 services:
   # ========================================
-  # NGINX - Main web server
+  # CADDY - Web server with automatic HTTPS
   # ========================================
-  nginx:
-    image: nginx:alpine
-    container_name: dashboards-nginx
+  caddy:
+    image: caddy:latest
+    container_name: dashboards-caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"  # HTTP/3
     volumes:
-      - ./infrastructure/nginx/nginx-letsencrypt.conf:/etc/nginx/nginx.conf:ro
-      - ./infrastructure/nginx/staging-ssl:/etc/nginx/staging-ssl:ro
-      - ./infrastructure/nginx/prod-ssl:/etc/nginx/prod-ssl:ro
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./infrastructure/nginx/hub:/usr/share/nginx/html/hub:ro
-      - ./infrastructure/nginx/reo-login:/usr/share/nginx/html/reo-login:ro
       - goose-output:/usr/share/nginx/html/goose:ro
       - reo-output:/usr/share/nginx/html/reo:ro
-      - certbot-var:/var/www/certbot:ro
+      - caddy_data:/data
+      - caddy_config:/config
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:2019/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -190,3 +189,11 @@ volumes:
   certbot-var:
     driver: local
     name: certbot-var
+
+  caddy_data:
+    driver: local
+    name: caddy_data
+
+  caddy_config:
+    driver: local
+    name: caddy_config
