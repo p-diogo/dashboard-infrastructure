@@ -1,10 +1,24 @@
 # Caddy configuration for The Graph Dashboards
 # Automatically obtains and renews Let's Encrypt certificates
 
-# Production: hub.thegraph.foundation (Grumpy Goose)
+# Production: hub.thegraph.foundation (Dashboard Hub)
 hub.thegraph.foundation {
-    # Grumpy Goose at root
-    root * /usr/share/nginx/html/goose
+    # Grumpy Goose (must be first to avoid conflict)
+    handle /goose* {
+        root /usr/share/nginx/html/goose
+        try_files {path} {path}/ /index.html
+        file_server browse
+    }
+
+    # REO
+    handle /reo* {
+        root /usr/share/nginx/html/reo
+        try_files {path} {path}/ /index.html
+        file_server browse
+    }
+
+    # Dashboard Hub at root (default)
+    root * /usr/share/nginx/html/hub
     file_server browse
 
     # Health check
@@ -49,39 +63,6 @@ staging.hub.thegraph.foundation {
         Referrer-Policy "strict-origin-when-cross-origin"
         Strict-Transport-Security "max-age=31536000; includeSubDomains"
     }
-
-    # Encode
-    encode gzip
-}
-
-# Legacy: dashboards.thegraph.foundation (Dashboard Hub + Goose + REO)
-dashboards.thegraph.foundation {
-    # Dashboard Hub at root
-    root * /usr/share/nginx/html/hub
-    file_server browse
-
-    # Grumpy Goose
-    handle /goose* {
-        root * /usr/share/nginx/html/goose
-        file_server browse
-    }
-
-    # REO (not protected - auth handled separately)
-    handle /reo* {
-        root * /usr/share/nginx/html/reo
-        file_server browse
-    }
-
-    # Health check
-    handle /health {
-        respond "healthy\n" 200
-    }
-
-    # Cache static assets
-    @static {
-        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
-    }
-    header @static Cache-Control "public, max-age=604800, immutable"
 
     # Encode
     encode gzip
