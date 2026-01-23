@@ -28,10 +28,12 @@ services:
     volumes:
       - ./infrastructure/nginx/nginx-letsencrypt.conf:/etc/nginx/nginx.conf:ro
       - ./infrastructure/nginx/staging-ssl:/etc/nginx/staging-ssl:ro
+      - ./infrastructure/nginx/prod-ssl:/etc/nginx/prod-ssl:ro
       - ./infrastructure/nginx/hub:/usr/share/nginx/html/hub:ro
       - ./infrastructure/nginx/reo-login:/usr/share/nginx/html/reo-login:ro
       - goose-output:/usr/share/nginx/html/goose:ro
       - reo-output:/usr/share/nginx/html/reo:ro
+      - certbot-var:/var/www/certbot:ro
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -184,3 +186,7 @@ volumes:
   reo-output:
     driver: local
     name: reo-output
+
+  certbot-var:
+    driver: local
+    name: certbot-var
