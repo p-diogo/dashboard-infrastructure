@@ -52,9 +52,10 @@ services:
     environment:
       - ENVIRONMENT=production
       - GOOSE_OUTPUT_DIR=/app/output
+      - GOOSE_DATABASE_PATH=/app/data/goose.db
     volumes:
       - goose-output:/app/output
-      - goose-data:/app
+      - goose-data:/app/data
     command: >
       sh -c "
       echo '🪿 Generating initial Grumpy Goose dashboard...' &&
@@ -72,9 +73,10 @@ services:
     environment:
       - ENVIRONMENT=production
       - GOOSE_OUTPUT_DIR=/app/output
+      - GOOSE_DATABASE_PATH=/app/data/goose.db
     volumes:
       - goose-output:/app/output
-      - goose-data:/app
+      - goose-data:/app/data
     env_file:
       - ../grumpygoose/.env
     command: ["python", "scheduler.py"]
