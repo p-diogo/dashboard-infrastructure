@@ -5,14 +5,14 @@
 hub.thegraph.foundation {
     # Grumpy Goose (must be first to avoid conflict)
     handle /goose* {
-        root /usr/share/nginx/html/goose
+        root * /usr/share/nginx/html/goose
         try_files {path} {path}/ /index.html
         file_server browse
     }
 
     # REO
     handle /reo* {
-        root /usr/share/nginx/html/reo
+        root * /usr/share/nginx/html/reo
         try_files {path} {path}/ /index.html
         file_server browse
     }
