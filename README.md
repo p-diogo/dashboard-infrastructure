@@ -8,7 +8,7 @@ A single Docker Compose setup that runs multiple monitoring dashboards:
 - **🪿 Grumpy Goose** - Governance oversight and operational monitoring
 - **🍪 Rewards Eligibility Oracle** - Indexer eligibility monitoring (GIP-0079)
 
-**Quick access:** [dashboards.thegraph.foundation](https://dashboards.thegraph.foundation)
+**Quick access:** [hub.thegraph.foundation](https://hub.thegraph.foundation)
 
 ## Quick Start
 
