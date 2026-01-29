@@ -23,5 +23,8 @@
   "homepage": "https://github.com/p-diogo/dashboard-infrastructure#readme",
   "devDependencies": {
     "@playwright/test": "^1.57.0"
+  },
+  "dependencies": {
+    "playwright": "^1.58.0"
   }
 }
