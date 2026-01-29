@@ -4,55 +4,71 @@ Complete guide for Claude Code and other AI agents working on this project.
 
 ## Project Overview
 
-This repository provides unified deployment infrastructure for The Graph Protocol's monitoring dashboards using Docker Compose and Nginx.
+This repository provides unified deployment infrastructure for The Graph Protocol's monitoring dashboards using Docker Compose and Caddy.
 
 ### Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Nginx (port 80)                   │
-│  Routes: / → hub, /goose, /reo (protected)          │
-│  Serves static HTML, proxies auth requests          │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Caddy (ports 80/443)                    │
+│  Routes: / → hub, /goose (prod+staging), /reo (protected) │
+│  Serves static HTML, reverse proxy to staging, SSL/TLS     │
+└─────────────────────────────────────────────────────────────┘
            │                    │                  │
     ┌──────┴────────┐    ┌─────┴─────┐     ┌─────┴─────┐
     │                 │    │           │     │           │
     ▼                 ▼    ▼           ▼     ▼           ▼
 ┌─────────┐     ┌─────────┐  ┌─────────┐  ┌─────────┐
 │ Volume  │     │ Volume  │  │ Volume  │  │Auth Gate│
-│ /hub    │     │ /goose  │  │ /reo    │  │ :8000   │
+│ /hub    │     │/goose   │  │ /reo    │  │ :8000   │
+│         │     │ (prod)  │  │         │  │         │
+│         │     │Volume   │  │         │  │         │
+│         │     │(staging)│  │         │  │         │
 └─────────┘     └─────────┘  └─────────┘  └─────────┘
+                (goose-prod-*)
+                (goose-staging-*)
 ```
 
 ### Services
 
 | Service | Purpose | Technology |
 |---------|---------|------------|
-| **nginx** | Web server & reverse proxy | Nginx Alpine |
+| **caddy** | Web server & reverse proxy, automatic HTTPS | Caddy |
 | **auth-gate** | OTP authentication for REO | FastAPI/Python 3.11 |
-| **grumpygoose** | One-shot dashboard generator | Python |
-| **grumpygoose-scheduler** | Regenerates dashboard every 5min | Python |
+| **grumpygoose** | Production one-shot dashboard generator | Python |
+| **grumpygoose-scheduler** | Production scheduler, regenerates dashboard every 5min | Python |
+| **grumpygoose-staging** | Staging server (Python) | Python |
+| **grumpygoose-scheduler-staging** | Staging scheduler | Python |
 | **reo** | One-shot REO dashboard generator | Python |
 | **reo-scheduler** | Regenerates REO dashboard every 5min | Python |
+
+### Environments
+
+| Environment | URL | Services | Volumes |
+|-------------|-----|----------|---------|
+| **Production** | hub.thegraph.foundation/goose | grumpygoose-prod, grumpygoose-scheduler-prod | goose-prod-* |
+| **Staging** | staging.hub.thegraph.foundation | grumpygoose-staging, grumpygoose-scheduler-staging | goose-staging-* |
 
 ### Protected Routes
 
 - `/` (hub) - **Public**
-- `/goose` (Grumpy Goose) - **Public**
+- `/goose` (Grumpy Goose Production) - **Public**
+- `/staging` → reverse proxy to `grumpygoose-staging:8080` - **Public**
 - `/reo` (Rewards Eligibility Oracle) - **OTP Protected**
 
 ## Repository Structure
 
 ```
 dashboard-infrastructure/
-├── docker-compose.yml              # Main orchestration
+├── docker-compose.yml              # Main orchestration (prod + staging)
 ├── deploy.sh                       # Deployment script
 ├── .env                            # Environment variables (not in git)
 ├── config/
 │   └── allowed_emails.txt          # Email whitelist for REO auth
 ├── infrastructure/
+│   ├── caddy/
+│   │   └── Caddyfile              # Caddy routing configuration
 │   ├── nginx/
-│   │   ├── nginx.conf              # Nginx routing configuration
 │   │   ├── hub/
 │   │   │   └── index.html          # Dashboard hub landing page
 │   │   └── reo-login/
@@ -73,10 +89,20 @@ dashboard-infrastructure/
 │       └── e2e/                    # Playwright end-to-end tests
 ├── docs/                           # Human-readable documentation
 │   ├── DEPLOYMENT.md               # Production deployment guide
+│   ├── VOLUME_MIGRATION.md         # Volume migration guide
 │   └── AUTHENTICATION.md           # OTP authentication setup
 ├── CLAUDE.md                       # This file (AI developer guide)
 └── README.md                       # Human-friendly overview
 ```
+
+### Volume Naming
+
+All Grumpy Goose volumes follow the pattern: `goose-{environment}-*`
+
+| Environment | Output Volume | Data Volume |
+|-------------|---------------|-------------|
+| Production | goose-prod-output | goose-prod-data |
+| Staging | goose-staging-output | goose-staging-data |
 
 ## OTP Authentication System
 
@@ -278,6 +304,8 @@ Returns:
 - Change `SESSION_SECRET` in production (invalidates all sessions)
 - Remove `__pycache__` directories from `.gitignore` without reason
 - Modify volume names without data migration plan
+- Deploy to production without testing staging first
+- Mix up staging and production volume names
 
 ### DO:
 
@@ -286,10 +314,77 @@ Returns:
 - Keep authentication logic in auth service
 - Document breaking changes
 - Update CLAUDE.md when making architectural changes
+- Follow the Grumpy Goose deployment workflow below
+
+## Grumpy Goose Deployment Workflow
+
+### Development Cycle
+
+1. **Develop** in the `grumpygoose` repository
+2. **Test** locally
+3. **Commit** and push to trigger GitHub Actions
+4. **Deploy to staging** and verify
+5. **Deploy to production** after staging verification
+
+### Deploy to Staging
+
+```bash
+cd dashboard-infrastructure/
+
+# Pull latest image
+docker pull ghcr.io/graphprotocol/grumpygoose:latest
+
+# Deploy to staging
+docker compose up -d grumpygoose-staging grumpygoose-scheduler-staging
+
+# Verify staging
+# Visit: https://staging.hub.thegraph.foundation
+# Check logs: docker logs -f grumpygoose-scheduler-staging
+```
+
+### Deploy to Production
+
+```bash
+cd dashboard-infrastructure/
+
+# Pull latest image
+docker pull ghcr.io/graphprotocol/grumpygoose:latest
+
+# Deploy to production
+docker compose up -d grumpygoose grumpygoose-scheduler
+
+# Verify production
+# Visit: https://hub.thegraph.foundation/goose
+# Check logs: docker logs -f grumpygoose-scheduler-prod
+```
+
+### Volume Management
+
+**Important**: Grumpy Goose uses separate volumes for staging and production to prevent conflicts:
+
+| Environment | Output Volume | Data Volume |
+|-------------|---------------|-------------|
+| Production | goose-prod-output | goose-prod-data |
+| Staging | goose-staging-output | goose-staging-data |
+
+If you need to reset an environment:
+
+```bash
+# Stop services
+docker compose stop grumpygoose-staging grumpygoose-scheduler-staging
+
+# Remove volumes (WARNING: Deletes all data!)
+docker volume rm goose-staging-output goose-staging-data
+
+# Restart services (will create fresh volumes)
+docker compose up -d grumpygoose-staging grumpygoose-scheduler-staging
+```
 
 ## Deployment
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment instructions.
+
+See [docs/VOLUME_MIGRATION.md](docs/VOLUME_MIGRATION.md) for volume migration procedures.
 
 Quick test deployment:
 ```bash

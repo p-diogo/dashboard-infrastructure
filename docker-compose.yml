@@ -1,13 +1,18 @@
 # Docker Compose orchestration for The Graph Dashboards
 #
 # This file orchestrates:
-#   - Nginx: Serves all dashboards with routing
-#   - Grumpy Goose: One-shot generator + scheduler
+#   - Caddy: Web server with automatic HTTPS
+#   - Grumpy Goose: Production + Staging environments
 #   - Rewards Eligibility Oracle: One-shot generator + scheduler
 #   - Auth Gate: OTP authentication service for REO dashboard
 #
+# Environments:
+#   - Production: hub.thegraph.foundation/goose (volumes: goose-prod-*)
+#   - Staging: staging.hub.thegraph.foundation (volumes: goose-staging-*)
+#
 # Usage:
 #   docker compose up -d                    # Start all services
+#   docker compose up -d grumpygoose-staging # Start only staging
 #   docker compose up -d --scale reo-scheduler=0  # Start without REO scheduler
 #   docker compose logs -f                  # View all logs
 #   docker compose down                     # Stop all services
@@ -29,7 +34,7 @@ services:
     volumes:
       - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./infrastructure/nginx/hub:/usr/share/nginx/html/hub:ro
-      - goose-output:/usr/share/nginx/html/goose:ro
+      - goose-prod-output:/usr/share/nginx/html/goose:ro
       - reo-output:/usr/share/nginx/html/reo:ro
       - caddy_data:/data
       - caddy_config:/config
@@ -43,7 +48,7 @@ services:
       - dashboards-network
 
   # ========================================
-  # GRUMPY GOOSE
+  # GRUMPY GOOSE - PRODUCTION
   # ========================================
   grumpygoose:
     container_name: grumpygoose-prod
@@ -54,11 +59,11 @@ services:
       - GOOSE_OUTPUT_DIR=/app/output
       - GOOSE_DATABASE_PATH=/app/data/goose.db
     volumes:
-      - goose-output:/app/output
-      - goose-data:/app/data
+      - goose-prod-output:/app/output
+      - goose-prod-data:/app/data
     command: >
       sh -c "
-      echo '🪿 Generating initial Grumpy Goose dashboard...' &&
+      echo '🪿 Generating initial Grumpy Goose dashboard (PRODUCTION)...' &&
       python setup.py &&
       python generate_static.py &&
       echo '✅ Grumpy Goose dashboard generated!'
@@ -75,14 +80,62 @@ services:
       - GOOSE_OUTPUT_DIR=/app/output
       - GOOSE_DATABASE_PATH=/app/data/goose.db
     volumes:
-      - goose-output:/app/output
-      - goose-data:/app/data
+      - goose-prod-output:/app/output
+      - goose-prod-data:/app/data
     env_file:
       - ../grumpygoose/.env
     command: ["python", "scheduler.py"]
     depends_on:
       grumpygoose:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f scheduler.py || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dashboards-network
+
+  # ========================================
+  # GRUMPY GOOSE - STAGING
+  # ========================================
+  grumpygoose-staging:
+    container_name: grumpygoose-staging
+    image: ghcr.io/graphprotocol/grumpygoose:latest
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=staging
+      - GOOSE_OUTPUT_DIR=/app/output
+      - GOOSE_DATABASE_PATH=/app/data/goose.db
+    volumes:
+      - goose-staging-output:/app/output
+      - goose-staging-data:/app/data
+    command: ["python", "server.py", "8080"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dashboards-network
+
+  grumpygoose-scheduler-staging:
+    container_name: grumpygoose-scheduler-staging
+    image: ghcr.io/graphprotocol/grumpygoose:latest
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=staging
+      - GOOSE_OUTPUT_DIR=/app/output
+      - GOOSE_DATABASE_PATH=/app/data/goose.db
+    volumes:
+      - goose-staging-output:/app/output
+      - goose-staging-data:/app/data
+    env_file:
+      - ../grumpygoose/.env
+    command: ["python", "scheduler.py"]
+    depends_on:
+      grumpygoose-staging:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f scheduler.py || exit 1"]
       interval: 60s
@@ -176,22 +229,30 @@ networks:
 # Volumes
 # ========================================
 volumes:
-  goose-output:
+  # Production volumes
+  goose-prod-output:
     driver: local
-    name: goose-output
+    name: goose-prod-output
 
-  goose-data:
+  goose-prod-data:
     driver: local
-    name: goose-data
+    name: goose-prod-data
 
+  # Staging volumes
+  goose-staging-output:
+    driver: local
+    name: goose-staging-output
+
+  goose-staging-data:
+    driver: local
+    name: goose-staging-data
+
+  # REO volumes
   reo-output:
     driver: local
     name: reo-output
 
-  certbot-var:
-    driver: local
-    name: certbot-var
-
+  # Caddy volumes
   caddy_data:
     driver: local
     name: caddy_data

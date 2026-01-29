@@ -4,6 +4,7 @@ Complete guide for deploying The Graph Dashboards Infrastructure.
 
 ## Table of Contents
 
+- [Grumpy Goose Environments](#grumpy-goose-environments)
 - [Quick Start](#quick-start)
 - [Prerequisites](#prerequisites)
 - [Initial Setup](#initial-setup)
@@ -12,6 +13,55 @@ Complete guide for deploying The Graph Dashboards Infrastructure.
 - [SSL/TLS Setup](#ssltls-setup)
 - [Verification](#verification)
 - [Maintenance](#maintenance)
+
+---
+
+## Grumpy Goose Environments
+
+This infrastructure manages **TWO Grumpy Goose environments**:
+
+### Production
+
+- **URL**: `hub.thegraph.foundation/goose`
+- **Volumes**: `goose-prod-output`, `goose-prod-data`
+- **Services**: `grumpygoose-prod`, `grumpygoose-scheduler-prod`
+- **Purpose**: Official production deployment
+
+### Staging
+
+- **URL**: ` staging.hub.thegraph.foundation`
+- **Volumes**: `goose-staging-output`, `goose-staging-data`
+- **Services**: `grumpygoose-staging`, `grumpygoose-scheduler-staging`
+- **Purpose**: Test new features before production
+
+### Quick Reference
+
+| Environment | URL | Services Command | Volumes |
+|-------------|-----|------------------|---------|
+| **Production** | hub.thegraph.foundation/goose | `docker compose up -d grumpygoose grumpygoose-scheduler` | goose-prod-* |
+| **Staging** | staging.hub.thegraph.foundation | `docker compose up -d grumpygoose-staging grumpygoose-scheduler-staging` | goose-staging-* |
+
+### Deployment Workflow
+
+1. **Develop** changes in the `grumpygoose` repository
+2. **Test** locally
+3. **Commit** and push to trigger GitHub Actions build
+4. **Deploy to staging** first and verify
+5. **Deploy to production** after staging verification
+
+```bash
+# Deploy to staging
+cd dashboard-infrastructure/
+docker pull ghcr.io/graphprotocol/grumpygoose:latest
+docker compose up -d grumpygoose-staging grumpygoose-scheduler-staging
+
+# Test staging at https://staging.hub.thegraph.foundation
+
+# Deploy to production (after staging verification)
+docker compose up -d grumpygoose grumpygoose-scheduler
+```
+
+---
 
 ## Quick Start
 
