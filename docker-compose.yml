@@ -110,6 +110,8 @@ services:
     volumes:
       - goose-staging-output:/app/output
       - goose-staging-data:/app/data
+    env_file:
+      - ../grumpygoose/.env
     command: ["python", "server.py", "8080"]
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
